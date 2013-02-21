@@ -1,0 +1,34 @@
+<package>
+  <name>multimux</name>
+  <version>0.0.1</version>
+  <description>
+    Grouped-input version of topic_tools/mux.  Switches between sets of inputs.
+  </description>
+  <maintainer email="hersh@willowgarage.com">Dave Hershberger</maintainer>
+  <license>BSD</license>
+
+  <url>http://ros.org/wiki/multimux</url>
+  <author>Morgan Quigley</author>
+  <author>Brian Gerkey</author>
+  <author>Dave Hershberger</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>cpp_common</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>rosconsole</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rostest</build_depend>
+  <build_depend>rostime</build_depend>
+  <build_depend>rosunit</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>xmlrpcpp</build_depend>
+  <build_depend>topic_tools</build_depend>
+
+  <run_depend>message_runtime</run_depend>
+  <run_depend>rosconsole</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>rostime</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>xmlrpcpp</run_depend>
+</package>
