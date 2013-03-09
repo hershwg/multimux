@@ -34,6 +34,7 @@
 #include <cstdio>
 #include <vector>
 #include <list>
+#include <map>
 #include "ros/console.h"
 #include "std_msgs/String.h"
 #include "topic_tools/MuxSelect.h"
@@ -46,6 +47,7 @@
 using std::string;
 using std::vector;
 using std::list;
+using std::map;
 using namespace topic_tools;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -57,13 +59,6 @@ class SingleMux
 public:
   const static string NO_PREFIX;
 
-private:
-  ros::NodeHandle *node_;
-  bool lazy_;
-  bool advertised_;
-  string output_topic_;
-  ros::Publisher pub_;
-
   struct sub_info_t
   {
     string prefix;
@@ -72,8 +67,18 @@ private:
     ShapeShifter* msg;
   };
 
+private:
+  ros::NodeHandle *node_;
+  bool lazy_;
+  bool advertised_;
+  string output_topic_;
+  ros::Publisher pub_;
+
   list<struct sub_info_t> subs_;
   list<struct sub_info_t>::iterator selected_;
+
+public:
+  const list<struct sub_info_t>& getSubs() { return subs_; }
 
 public:
   SingleMux( ros::NodeHandle* node, bool lazy, const vector<string>& prefixes, string output_topic )
@@ -277,6 +282,7 @@ static string g_selected_prefix = SingleMux::NO_PREFIX;
 ros::Publisher g_pub_selected;
 static vector<SingleMux*> g_muxes;
 static vector<string> g_prefixes;
+static map<string,string> g_topic_to_prefix_map;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Service callbacks
@@ -286,24 +292,23 @@ bool select_prefix_cb( topic_tools::MuxSelect::Request  &req,
                        topic_tools::MuxSelect::Response &res )
 {
   bool ret = true;
-  string new_prefix = req.topic;
-
+  string new_prefix_or_topic = req.topic;
+  string new_prefix;
   res.prev_topic = g_selected_prefix;
 
   bool found = false;
-  if( new_prefix == SingleMux::NO_PREFIX )
+  if( new_prefix_or_topic == SingleMux::NO_PREFIX )
   {
+    new_prefix = new_prefix_or_topic;
     found = true;
   }
   else
   {
-    for( size_t i = 0; i < g_prefixes.size(); i++ )
+    map<string,string>::iterator it = g_topic_to_prefix_map.find( new_prefix_or_topic );
+    if( it != g_topic_to_prefix_map.end() )
     {
-      if( g_prefixes[ i ] == new_prefix )
-      {
-        found = true;
-        break;
-      }
+      new_prefix = it->second;
+      found = true;
     }
   }
   if( !found )
@@ -320,7 +325,7 @@ bool select_prefix_cb( topic_tools::MuxSelect::Request  &req,
   if(ret)
   {
     std_msgs::String t;
-    t.data = req.topic;
+    t.data = new_prefix;
     g_pub_selected.publish(t);
   }
 
@@ -488,7 +493,27 @@ int main(int argc, char **argv)
 
   for( size_t topics_index = 0; topics_index < topics.size(); topics_index++ )
   {
-    g_muxes.push_back( new SingleMux( &n, lazy, g_prefixes, topics[ topics_index ]));
+    // Create the mux
+    SingleMux* mux = new SingleMux( &n, lazy, g_prefixes, topics[ topics_index ]);
+
+    // Store it in global vector.
+    g_muxes.push_back( mux );
+
+    // Add its topics to the global topic-to-prefix map.
+    list<SingleMux::sub_info_t> subs = mux->getSubs();
+    list<SingleMux::sub_info_t>::iterator sub_it;
+    for( sub_it = subs.begin(); sub_it != subs.end(); sub_it++ )
+    {
+      SingleMux::sub_info_t& sub = *sub_it;
+      g_topic_to_prefix_map[ sub.topic_name ] = sub.prefix;
+    }
+  }
+
+  // Now add each prefix by itself into the topic-to-prefix map, so
+  // people can select prefixes directly by name.
+  for( int i = 0; i < g_prefixes.size(); i++ )
+  {
+    g_topic_to_prefix_map[ g_prefixes[ i ]] = g_prefixes[ i ];
   }
 
   g_selected_prefix = g_prefixes[ 0 ]; // select first prefix to start
