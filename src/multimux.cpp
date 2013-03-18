@@ -296,6 +296,8 @@ bool select_prefix_cb( topic_tools::MuxSelect::Request  &req,
   string new_prefix;
   res.prev_topic = g_selected_prefix;
 
+  ROS_DEBUG( "multimux select '%s' called.", new_prefix_or_topic.c_str() );
+
   bool found = false;
   if( new_prefix_or_topic == SingleMux::NO_PREFIX )
   {
@@ -309,6 +311,7 @@ bool select_prefix_cb( topic_tools::MuxSelect::Request  &req,
     {
       new_prefix = it->second;
       found = true;
+      ROS_DEBUG( "multimux found prefix '%s' to select.", new_prefix.c_str() );
     }
   }
   if( !found )
@@ -327,6 +330,7 @@ bool select_prefix_cb( topic_tools::MuxSelect::Request  &req,
     std_msgs::String t;
     t.data = new_prefix;
     g_pub_selected.publish(t);
+    g_selected_prefix = new_prefix;
   }
 
   return ret;
