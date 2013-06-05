@@ -11,7 +11,7 @@ class MultimuxClient:
         rospy.loginfo('Acquiring mux %s' % self.mux_service)
         self.prev_topic = self.set_mux(self.prefix)
     
-    def __exit__(self):
+    def __exit__(self, ex_type, ex_value, ex_traceback):
         rospy.loginfo('Releasing mux %s' % self.mux_service)
         if self.prev_topic is None:
             raise ValueError('Tried to release mux when not holding it')
