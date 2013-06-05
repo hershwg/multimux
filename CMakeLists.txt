@@ -5,6 +5,7 @@ find_package(catkin COMPONENTS cpp_common message_generation rosconsole roscpp r
 include_directories(include)
 include_directories(${catkin_INCLUDE_DIRS})
 
+catkin_python_setup()
 catkin_package(
   CATKIN_DEPENDS message_runtime rosconsole roscpp std_msgs xmlrpcpp
 )
